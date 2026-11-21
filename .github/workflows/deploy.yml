@@ -24,6 +24,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install browsers for tests
+        run: npx playwright install chromium
       - name: Test
         run: npm test
       - name: Build
