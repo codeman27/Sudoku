@@ -1,0 +1,17 @@
+{
+  "name": "Sudoku Journal",
+  "short_name": "Sudoku",
+  "description": "A quiet, paper-styled Sudoku puzzle game. Plays offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#f9f2e5",
+  "background_color": "#f9f2e5",
+  "lang": "en",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

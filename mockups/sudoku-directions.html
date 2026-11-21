@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sudoku — visual directions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 48px 24px 64px;
+      color: #33332f;
+      background: #eae8e2;
+      font: 15px/1.5 Arial, sans-serif;
+    }
+    .intro, .directions { max-width: 1150px; margin: auto; }
+    .intro { margin-bottom: 30px; }
+    .eyebrow { margin: 0 0 6px; font-size: 11px; font-weight: bold; letter-spacing: .15em; text-transform: uppercase; }
+    .intro h1 { margin: 0; font: 32px/1.2 Georgia, serif; }
+    .intro p:last-child { margin: 9px 0 0; color: #696962; }
+    .directions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
+    .directions > section { min-width: 0; }
+    .direction-label { margin: 0 0 12px; font-size: 12px; font-weight: bold; letter-spacing: .12em; text-transform: uppercase; }
+    .screen {
+      --ink: #594a3e;
+      --muted: #9a8775;
+      --line: #cabbab;
+      --strong-line: #806b58;
+      --accent: #aa7559;
+      --paper: #f9f2e5;
+      min-height: 790px;
+      padding: 32px clamp(20px, 5vw, 48px) 28px;
+      color: var(--ink);
+      background: var(--paper);
+      box-shadow: 0 16px 40px #5146381a;
+    }
+    .sepia {
+      font-family: Georgia, serif;
+      background: radial-gradient(ellipse at 90% 10%, #e8d6ba55, transparent 38%),
+                  radial-gradient(ellipse at 5% 90%, #d2b79433, transparent 34%), var(--paper);
+    }
+    .mint {
+      --ink: #294842;
+      --muted: #708e81;
+      --line: #a4b9a8;
+      --strong-line: #405e53;
+      --accent: #b88932;
+      --paper: #edf5e9;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(ellipse at 100% 0%, #d8eadd, transparent 50%), var(--paper);
+    }
+    .topbar, .game-meta, .toolbar, .footer { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 19px; font-weight: bold; letter-spacing: -.03em; }
+    .brand-mark { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid currentColor; font-size: 18px; font-weight: normal; }
+    .mint .brand-mark { border: 2px solid currentColor; border-radius: 9px 7px 10px 6px; transform: rotate(-4deg); }
+    .menu { color: var(--muted); font: 22px/1 Arial, sans-serif; letter-spacing: 3px; }
+    .title { margin: 43px 0 23px; text-align: center; }
+    .title .overline { margin: 0 0 7px; color: var(--accent); font: bold 10px/1.3 Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+    .title h2 { margin: 0; font-size: 30px; line-height: 1.15; font-weight: normal; }
+    .mint .title h2 { font-size: 27px; font-weight: 700; letter-spacing: -.04em; }
+    .title p:last-child { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    .game-meta { margin-bottom: 13px; color: var(--muted); font-size: 12px; }
+    .badge { padding: 5px 10px; color: var(--accent); border: 1px solid #cba992; border-radius: 20px; font: bold 10px/1 Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+    .mint .badge { background: #e8d59e; border-color: #e8d59e; color: #765a26; }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      aspect-ratio: 1;
+      border: 2px solid var(--strong-line);
+      background: #fffaf080;
+    }
+    .mint .board { position: relative; border: 0; background: #f9fcf5; transform: rotate(-.25deg); }
+    .ink-grid { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .ink-grid path { fill: none; stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .ink-grid .major { stroke: var(--strong-line); stroke-width: 2; }
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: clamp(14px, 2.2vw, 21px);
+      line-height: 1;
+    }
+    .cell:nth-child(9n) { border-right: 0; }
+    .cell:nth-child(n+73) { border-bottom: 0; }
+    .cell:nth-child(9n+3), .cell:nth-child(9n+6) { border-right: 2px solid var(--strong-line); }
+    .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--strong-line); }
+    .cell.entered { color: var(--accent); }
+    .sepia .cell.entered::before {
+      content: "";
+      position: absolute;
+      inset: 9% 5%;
+      background: radial-gradient(ellipse, #c786715c 5%, #c7867128 48%, transparent 72%);
+      transform: rotate(-12deg);
+      pointer-events: none;
+    }
+    .mint .cell.entered { color: #a77420; font-weight: bold; background: #ead9a249; }
+    .mint .board .cell { border: 0; font-weight: 600; }
+    .toolbar { gap: 6px; margin: 24px 0 20px; }
+    .tool { flex: 1; text-align: center; color: var(--muted); font: 11px/1.3 Arial, sans-serif; }
+    .tool-icon { display: block; margin-bottom: 6px; color: var(--ink); font-size: 19px; line-height: 1; }
+    .numbers { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 5px; }
+    .number { display: grid; place-items: center; aspect-ratio: 1; border: 1px solid #d5c6b5; border-radius: 3px; font-size: 18px; }
+    .mint .number { border-color: #bbcebb; border-radius: 8px 6px 9px 7px; background: #f9fcf6; font-weight: bold; }
+    .footer { flex-wrap: wrap; gap: 8px; margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .footer strong { color: var(--accent); font-weight: normal; }
+    .mint .footer strong { font-weight: bold; }
+    .caption { margin: 13px 2px 0; color: #72726b; font-size: 13px; }
+    @media (max-width: 760px) {
+      body { padding: 28px 16px 48px; }
+      .directions { grid-template-columns: 1fr; gap: 32px; max-width: 520px; }
+      .screen { min-height: 0; }
+      .cell { font-size: clamp(15px, 5vw, 21px); }
+    }
+    @media (max-width: 380px) {
+      .screen { padding: 25px 16px; }
+      .title { margin-top: 30px; }
+      .number { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="intro">
+    <p class="eyebrow">Design exploration · static preview</p>
+    <h1>Two ways to unwind</h1>
+    <p>One puzzle, two paper-inspired directions. This is a visual mockup; controls are not interactive.</p>
+  </header>
+  <main class="directions">
+    <section>
+      <h2 class="direction-label">A / The quiet journal</h2>
+      <div class="screen sepia">
+        <div class="topbar"><div class="brand"><span class="brand-mark">s</span> sudoku</div><span class="menu" aria-hidden="true">···</span></div>
+        <div class="title"><p class="overline">A moment for yourself</p><h2>Today's puzzle</h2><p>Settle in, take your time.</p></div>
+        <div class="game-meta"><span class="badge">Easy</span><span>◷ &nbsp;08:42</span></div>
+        <div class="board" role="img" aria-label="Illustrative Sudoku puzzle with watercolor-tinted entered numbers">
+          <span class="cell">5</span><span class="cell">3</span><span class="cell"></span><span class="cell"></span><span class="cell">7</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell">1</span><span class="cell">9</span><span class="cell">5</span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell"></span><span class="cell">9</span><span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span><span class="cell"></span>
+          <span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">3</span>
+          <span class="cell">4</span><span class="cell"></span><span class="cell"></span><span class="cell">8</span><span class="cell entered">5</span><span class="cell">3</span><span class="cell"></span><span class="cell"></span><span class="cell">1</span>
+          <span class="cell">7</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">2</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span>
+          <span class="cell"></span><span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">2</span><span class="cell">8</span><span class="cell"></span>
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">4</span><span class="cell">1</span><span class="cell">9</span><span class="cell"></span><span class="cell entered">3</span><span class="cell">5</span>
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell">7</span><span class="cell">9</span>
+        </div>
+        <div class="toolbar" aria-hidden="true"><div class="tool"><span class="tool-icon">↶</span>Undo</div><div class="tool"><span class="tool-icon">✎</span>Notes</div><div class="tool"><span class="tool-icon">◇</span>Erase</div><div class="tool"><span class="tool-icon">✧</span>Hint</div></div>
+        <div class="numbers" aria-hidden="true"><span class="number">1</span><span class="number">2</span><span class="number">3</span><span class="number">4</span><span class="number">5</span><span class="number">6</span><span class="number">7</span><span class="number">8</span><span class="number">9</span></div>
+        <div class="footer"><span>Your little daily ritual</span><strong>New puzzle ↗</strong></div>
+      </div>
+      <p class="caption">Sepia paper, literary serif type, and soft watercolor blooms on entered cells.</p>
+    </section>
+    <section>
+      <h2 class="direction-label">B / The fresh sketchbook</h2>
+      <div class="screen mint">
+        <div class="topbar"><div class="brand"><span class="brand-mark">s</span> sudoku</div><span class="menu" aria-hidden="true">···</span></div>
+        <div class="title"><p class="overline">A little time for you</p><h2>Today's puzzle</h2><p>Find your focus, one square at a time.</p></div>
+        <div class="game-meta"><span class="badge">Easy</span><span>◷ &nbsp;08:42</span></div>
+        <div class="board" role="img" aria-label="Illustrative Sudoku puzzle with ochre-tinted entered numbers">
+          <svg class="ink-grid" viewBox="0 0 90 90" preserveAspectRatio="none" aria-hidden="true">
+            <path class="major" d="M1 1 Q45 .6 89 1 L89 89 Q45 89.4 1 89 Q.6 45 1 1Z"/>
+            <path d="M10.8 1 Q10.4 45 10.8 89 M20.5 1 Q20.9 44 20.5 89 M39.9 1 Q39.5 48 39.9 89 M49.8 1 Q50.1 45 49.8 89 M69.4 1 Q69.1 43 69.4 89 M79.2 1 Q79.6 47 79.2 89"/>
+            <path d="M1 10.8 Q45 10.4 89 10.8 M1 20.5 Q46 20.9 89 20.5 M1 39.9 Q44 39.5 89 39.9 M1 49.8 Q47 50.1 89 49.8 M1 69.4 Q44 69.1 89 69.4 M1 79.2 Q45 79.6 89 79.2"/>
+            <path class="major" d="M30.3 1 Q30 44 30.3 89 M59.7 1 Q60 46 59.7 89 M1 30.3 Q45 30 89 30.3 M1 59.7 Q43 60 89 59.7"/>
+          </svg>
+          <span class="cell">5</span><span class="cell">3</span><span class="cell"></span><span class="cell"></span><span class="cell">7</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell">1</span><span class="cell">9</span><span class="cell">5</span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell"></span><span class="cell">9</span><span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span><span class="cell"></span>
+          <span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">3</span>
+          <span class="cell">4</span><span class="cell"></span><span class="cell"></span><span class="cell">8</span><span class="cell entered">5</span><span class="cell">3</span><span class="cell"></span><span class="cell"></span><span class="cell">1</span>
+          <span class="cell">7</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">2</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">6</span>
+          <span class="cell"></span><span class="cell">6</span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">2</span><span class="cell">8</span><span class="cell"></span>
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">4</span><span class="cell">1</span><span class="cell">9</span><span class="cell"></span><span class="cell entered">3</span><span class="cell">5</span>
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell">8</span><span class="cell"></span><span class="cell"></span><span class="cell">7</span><span class="cell">9</span>
+        </div>
+        <div class="toolbar" aria-hidden="true"><div class="tool"><span class="tool-icon">↶</span>Undo</div><div class="tool"><span class="tool-icon">✎</span>Notes</div><div class="tool"><span class="tool-icon">◇</span>Erase</div><div class="tool"><span class="tool-icon">✧</span>Hint</div></div>
+        <div class="numbers" aria-hidden="true"><span class="number">1</span><span class="number">2</span><span class="number">3</span><span class="number">4</span><span class="number">5</span><span class="number">6</span><span class="number">7</span><span class="number">8</span><span class="number">9</span></div>
+        <div class="footer"><span>Making space for a little focus</span><strong>New puzzle ↗</strong></div>
+      </div>
+      <p class="caption">Pale mint, warm ochre accents, clean sans-serif type, and an ink-inspired grid.</p>
+    </section>
+  </main>
+</body>
+</html>
