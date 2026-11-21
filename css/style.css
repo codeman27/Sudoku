@@ -72,9 +72,12 @@ body {
 .board {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  width: min(96vw, calc(100dvh - var(--chrome)));
+  /* size against .screen's content box, not the viewport: 96vw is wider than
+     the padded container on phones, which pushed the board flush left */
+  width: min(100%, calc(100dvh - var(--chrome)));
   max-width: 520px;
   aspect-ratio: 1;
+  align-self: center;           /* cross axis of .screen's column flex = horizontal */
   border: 2px solid var(--strong-line);
   background: #fffaf080;
 }

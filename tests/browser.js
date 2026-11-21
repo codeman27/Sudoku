@@ -44,6 +44,27 @@ function startServer() {
       if (bb.width > 390) throw new Error('board too wide: ' + bb.width);
     });
 
+    await test('board is horizontally centered, no overflow at phone sizes', async () => {
+      for (const [w, h] of [[390, 844], [360, 740]]) {
+        const phone = await browser.newContext({ viewport: { width: w, height: h } });
+        const p = await phone.newPage();
+        await p.goto(url);
+        const m = await p.evaluate(() => {
+          const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { x: r.x, right: r.x + r.width }; };
+          return { vw: window.innerWidth, screen: box('.screen'), board: box('#board'), scrollH: document.documentElement.scrollHeight, innerH: window.innerHeight };
+        });
+        const left = m.board.x - m.screen.x;
+        const right = m.screen.right - m.board.right;
+        if (Math.abs(left - right) > 1)
+          throw new Error(w + 'x' + h + ' off-center: left ' + left.toFixed(1) + ' vs right ' + right.toFixed(1));
+        if (m.board.x < 0 || m.board.right > m.vw)
+          throw new Error(w + 'x' + h + ' overflows viewport: board ' + m.board.x.toFixed(1) + '..' + m.board.right.toFixed(1));
+        if (m.scrollH > m.innerH + 1)
+          throw new Error(w + 'x' + h + ' scrolls: ' + m.scrollH + ' > ' + m.innerH);
+        await phone.close();
+      }
+    });
+
     await test('accessibility roles and roving tabindex', async () => {
       const a = await page.evaluate(() => ({
         grid: document.getElementById('board').getAttribute('role'),
