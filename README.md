@@ -32,8 +32,13 @@ running by this project; start/stop it as needed.
 ## Install / offline
 
 Browsers require a secure origin (https, or localhost) to install a PWA.
-On localhost: open the URL, use the browser's "Install app" prompt, then
-reload with networking disabled — the app loads from the service worker cache.
+Visit the app online first and allow the service worker to finish caching its
+files. After that, the installed app can be opened offline, resume saved games,
+and generate new puzzles at every difficulty without downloading boards.
+Offline availability depends on the browser retaining the site data.
+
+The version shown in the footer matches `package.json`; update both when
+releasing a new version.
 
 ## Tests
 

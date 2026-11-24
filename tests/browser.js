@@ -12,7 +12,7 @@ function test(name, fn) {
 }
 
 function startServer() {
-  const proc = spawn('python3', ['-m', 'http.server', String(PORT), '-d', process.cwd()], { stdio: 'ignore' });
+  const proc = spawn('python3', ['-m', 'http.server', String(PORT), '-d', process.env.SUDOKU_TEST_DIR || process.cwd()], { stdio: 'ignore' });
   return (async () => {
     for (let i = 0; i < 100; i++) {
       const ok = await new Promise((res) => {
@@ -51,7 +51,8 @@ function startServer() {
         await p.goto(url);
         const m = await p.evaluate(() => {
           const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { x: r.x, right: r.x + r.width }; };
-          return { vw: window.innerWidth, screen: box('.screen'), board: box('#board'), scrollH: document.documentElement.scrollHeight, innerH: window.innerHeight };
+          const version = document.querySelector('.app-version').getBoundingClientRect();
+          return { vw: window.innerWidth, screen: box('.screen'), board: box('#board'), versionBottom: version.bottom, scrollH: document.documentElement.scrollHeight, innerH: window.innerHeight };
         });
         const left = m.board.x - m.screen.x;
         const right = m.screen.right - m.board.right;
@@ -61,8 +62,15 @@ function startServer() {
           throw new Error(w + 'x' + h + ' overflows viewport: board ' + m.board.x.toFixed(1) + '..' + m.board.right.toFixed(1));
         if (m.scrollH > m.innerH + 1)
           throw new Error(w + 'x' + h + ' scrolls: ' + m.scrollH + ' > ' + m.innerH);
+        if (m.versionBottom > m.innerH)
+          throw new Error(w + 'x' + h + ' version is below the viewport');
         await phone.close();
       }
+    });
+
+    await test('footer displays the current app version', async () => {
+      const version = await page.locator('.app-version').textContent();
+      if (version.trim() !== 'v' + require('../package.json').version) throw new Error('version: ' + version);
     });
 
     await test('accessibility roles and roving tabindex', async () => {
@@ -262,6 +270,47 @@ function startServer() {
         return r.status === 200 ? JSON.parse(await r.text()) : null;
       });
       if (!m || m.display !== 'standalone' || m.icons.length < 2) throw new Error('manifest: ' + JSON.stringify(m));
+    });
+
+    await test('production CSP permits offline launch and new puzzles at every difficulty', async () => {
+      const offlineCtx = await browser.newContext();
+      try {
+        await offlineCtx.route(url, async (route) => {
+          const response = await route.fetch();
+          await route.fulfill({
+            response,
+            headers: { ...response.headers(), 'content-security-policy': "default-src 'self'; script-src 'self'" }
+          });
+        });
+        const onlinePage = await offlineCtx.newPage();
+        await onlinePage.goto(url);
+        await onlinePage.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 });
+        await offlineCtx.setOffline(true);
+        await onlinePage.close();
+        const offlinePage = await offlineCtx.newPage();
+        await offlinePage.goto(url + 'index.html');
+        for (const diff of ['easy', 'medium', 'hard']) {
+          await offlinePage.click('.diff-btn[data-diff="' + diff + '"]');
+          await offlinePage.click('#new-game');
+          const state = await offlinePage.evaluate(() => ({
+            ...debugState(),
+            solutions: Sudoku.countSolutions(debugState().grid, 2)
+          }));
+          if (state.difficulty !== diff || state.solutions !== 1) throw new Error('invalid offline ' + diff + ' puzzle');
+          const idx = state.grid.indexOf(0);
+          if (idx < 0) throw new Error('no empty cells in ' + diff + ' puzzle');
+          await offlinePage.click('.cell[data-idx="' + idx + '"]');
+          await offlinePage.click('#pad button[data-val="' + state.solution[idx] + '"]');
+          if (await offlinePage.evaluate((i) => debugState().grid[i], idx) !== state.solution[idx])
+            throw new Error('offline entry failed for ' + diff);
+        }
+        const before = await offlinePage.evaluate(() => debugState().grid.join(','));
+        await offlinePage.reload();
+        if (await offlinePage.evaluate(() => debugState().grid.join(',')) !== before)
+          throw new Error('offline progress not restored');
+      } finally {
+        await offlineCtx.close();
+      }
     });
 
     await test('offline: server stopped, reload loads from cache and plays', async () => {

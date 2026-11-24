@@ -48,6 +48,7 @@
     <footer class="footer">
       <span id="stats-line" aria-live="off"></span>
       <button type="button" class="new-game" id="new-game">New puzzle &#8601;</button>
+      <span class="app-version">v1.0.0</span>
     </footer>
 
     <div class="sr-only" role="status" aria-live="polite" id="announce"></div>
@@ -68,15 +69,5 @@
   <script src="js/sudoku.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').catch(function (error) {
-          console.error('Offline support could not be enabled.', error);
-          document.getElementById('announce').textContent = 'Offline support could not be enabled.';
-        });
-      });
-    }
-  </script>
 </body>
 </html>

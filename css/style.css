@@ -152,6 +152,7 @@ body {
 
 .footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 .footer strong { color: var(--accent); font-weight: normal; }
+.app-version { flex-basis: 100%; text-align: right; font: 10px/1.2 Arial, sans-serif; }
 .new-game {
   min-height: 36px; padding: 8px 14px; border: 1px solid #cba992; border-radius: 20px;
   background: transparent; color: var(--accent);

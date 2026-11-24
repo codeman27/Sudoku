@@ -13,6 +13,15 @@
   const overlayEl = document.getElementById('win-overlay');
   const winDetailEl = document.getElementById('win-detail');
 
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (error) {
+        console.error('Offline support could not be enabled.', error);
+        announceEl.textContent = 'Offline support could not be enabled.';
+      });
+    });
+  }
+
   let grid, solution, notes, givens, difficulty, elapsed, hints, won;
   let undoStack = [];
   let notesMode = false;
